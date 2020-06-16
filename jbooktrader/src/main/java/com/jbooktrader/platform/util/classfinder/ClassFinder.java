@@ -7,6 +7,7 @@ import com.jbooktrader.platform.strategy.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.*;
 
@@ -24,7 +25,7 @@ public class ClassFinder {
      * strategy is implemented in a class that extends the base Strategy class.
      */
     public static List<String> getClasses() {
-        URL[] classpath = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
+        URL[] classpath = getUrls();
         List<String> classNames = new ArrayList<>();
 
         for (URL url : classpath) {
@@ -78,6 +79,22 @@ public class ClassFinder {
 
         return classNames;
     }
+
+    private static URL[] getUrls() {
+        URL[] result;
+        try {
+            String classpath = System.getProperty("java.class.path");
+            String[] entries = classpath.split(File.pathSeparator);
+            result = new URL[entries.length];
+            for (int i = 0; i < entries.length; i++) {
+                result[i] = Paths.get(entries[i]).toAbsolutePath().toUri().toURL();
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return result;
+    }
+
 
     public static Strategy getInstance(String name) throws JBookTraderException {
         try {
